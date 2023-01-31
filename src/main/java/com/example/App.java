@@ -14,6 +14,7 @@ public class App {
         SpringApplication.run(App.class, args);
     }
 
+    /*
     @PostConstruct
     public void init() {
         Logger log = LoggerFactory.getLogger(App.class);
@@ -28,4 +29,5 @@ public class App {
             log.error("Error occurred!", e);
         }
     }
+    */
 }
