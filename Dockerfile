@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-alpine
+FROM openjdk:17-alpine
 
 ARG VERSION
 ENV APP_VERSION=$VERSION
