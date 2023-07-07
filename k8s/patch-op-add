@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+docker_image_name=yuuvis/api-web:1.14.6
+container_name=api-web
+deployment_name=api-web
+
+container_name=java-demo
+deployment_name=java-demo-app
+
+
+containers=($(kubectl get deployment "${deployment_name}" -o jsonpath='{.spec.template.spec.containers[*].name }'))
+
+for i in ${!containers[@]}; do
+    if [ ".${containers[$i]}" = ".${container_name}" ]; then
+        kubectl patch deployment "${deployment_name}" \
+            --type='json' \
+            -p="[{"op": "add", "path": "/spec/template/spec/containers/${i}/ports/-", "value": { "containerPort": 5555, "protocol": "TCP" }}]"
+    fi
+done

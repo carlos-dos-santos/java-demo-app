@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcp-debug-svc
+  namespace: test
+spec:
+  selector:
+    app: application
+  type: ClusterIP
+  ports:
+    - name: debug
+      port: 5555
+      targetPort: 5005
+      protocol: TCP

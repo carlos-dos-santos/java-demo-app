@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-demo-app
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: application
+  template:
+    metadata:
+      labels:
+        app: application
+    spec:
+      containers:
+        - name: java-demo
+          image: kubernetes.docker.internal/java-demo-app:1.2.8
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+            - name: debug-port
+              containerPort: 5005
+              protocol: TCP
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+  namespace: test
+spec:
+  selector:
+    app: application
+  ports:
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcp-debug-svc
+  namespace: test
+spec:
+  selector:
+    app: application
+  type: ClusterIP
+  ports:
+    - name: tcp-port
+      port: 5555
+      targetPort: 5005
+      protocol: TCP

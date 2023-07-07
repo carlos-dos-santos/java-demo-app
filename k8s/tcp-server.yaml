@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tcp-demo
+  namespace: test
+  labels:
+    app: tcp-demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tcp-demo-app
+  template:
+    metadata:
+      labels:
+        app: tcp-demo-app
+    spec:
+      containers:
+      - image: kubernetes.docker.internal/tcp-server:1.0.0
+        imagePullPolicy: Always
+        name: tcp-demo-app
+        ports:
+        - containerPort: 3434
+          protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tcp-debug-svc
+  namespace: test
+spec:
+  selector:
+    app: tcp-demo-app
+  type: ClusterIP
+  ports:
+    - name: tcp-port
+      port: 5555
+      targetPort: 3434
+      protocol: TCP

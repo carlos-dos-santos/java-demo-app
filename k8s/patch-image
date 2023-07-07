@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+deployment_name=api-web
+docker_image_name=yuuvis/api-web:1.14.6
+container_name=api-web
+
+image="kubernetes.docker.internal/${docker_image_name}"
+kubectl set image deployment/${deployment_name} ${container_name}=${image}
+
+kubectl rollout restart deployment/${deployment_name}
