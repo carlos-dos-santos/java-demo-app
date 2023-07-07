@@ -1,19 +1,50 @@
 #!/usr/bin/env bash
 
-docker_image_name=yuuvis/api-web:1.14.6
-container_name=api-web
-deployment_name=api-web
 
-container_name=java-demo
-deployment_name=java-demo-app
+CONTAINER_NAME=java-demo
+CONTAINER_PORT=5005
+DEPLOYMENT_NAME=java-demo-app
+K8S_SELECTOR=application
+JVM_DEBUG_PORT=30333
+NAMESPACE=test
 
 
-containers=($(kubectl get deployment "${deployment_name}" -o jsonpath='{.spec.template.spec.containers[*].name }'))
+CONTAINERS=($(kubectl get deployment "${DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[*].name }'))
 
-for i in ${!containers[@]}; do
-    if [ ".${containers[$i]}" = ".${container_name}" ]; then
-        kubectl patch deployment "${deployment_name}" \
-            --type='json' \
-            -p="[{"op": "add", "path": "/spec/template/spec/containers/${i}/ports/-", "value": { "containerPort": 5555, "protocol": "TCP" }}]"
+for i in ${!CONTAINERS[@]}; do
+    if [ ".${CONTAINERS[$i]}" = ".${CONTAINER_NAME}" ]; then
+
+        QUERY_PORT=$(printf \
+            '{.spec.template.spec.containers[?(@.name==\"%s\")].ports[?(@.containerPort==%d)].containerPort}' \
+            ${CONTAINER_NAME} ${CONTAINER_PORT})
+
+        if [ ".${CONTAINER_PORT}" != ".$(kubectl get deployment java-demo-app  -o jsonpath=${QUERY_PORT})" ]; then
+            kubectl patch deployment "${DEPLOYMENT_NAME}" \
+                --type='json' \
+                -p="[{"op": "add", "path": "/spec/template/spec/containers/${i}/ports/-", "value": { "containerPort": 5005, "protocol": "TCP" }}]"
+        fi
     fi
 done
+
+
+# kubectl get deployment java-demo-app \
+#     -o jsonpath="{.spec.template.spec.containers[?(@.name=="java-demo")].ports[?(@.containerPort==5005)].containerPort}"
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: debug-${DEPLOYMENT_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  selector:
+    name: ${K8S_SELECTOR}
+  type: NodePort
+  ports:
+  - port: 5005
+    name: debug
+    targetPort: 5005
+    nodePort: ${JVM_DEBUG_PORT}
+    protocol: TCP
+EOF
