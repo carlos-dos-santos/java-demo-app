@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 
+set -eu
 
-CONTAINER_NAME=java-demo
-CONTAINER_PORT=5005
+# patch-deplyoment
 DEPLOYMENT_NAME=java-demo-app
-K8S_SELECTOR=application
-JVM_DEBUG_PORT=30333
+CONTAINER_NAME=java-demo
 NAMESPACE=test
+
+DEPLOYMENT_NAME=api-web
+CONTAINER_NAME=api-web
+NAMESPACE=yuuvis
+
+
+CONTAINER_PORT=5005
+JVM_DEBUG_PORT=30222
 
 
 CONTAINERS=($(kubectl get deployment "${DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[*].name }'))
@@ -18,17 +25,24 @@ for i in ${!CONTAINERS[@]}; do
             '{.spec.template.spec.containers[?(@.name==\"%s\")].ports[?(@.containerPort==%d)].containerPort}' \
             ${CONTAINER_NAME} ${CONTAINER_PORT})
 
-        if [ ".${CONTAINER_PORT}" != ".$(kubectl get deployment java-demo-app  -o jsonpath=${QUERY_PORT})" ]; then
+        if [ ".${CONTAINER_PORT}" != ".$(kubectl get deployment ${DEPLOYMENT_NAME}  -o jsonpath=${QUERY_PORT})" ]; then
             kubectl patch deployment "${DEPLOYMENT_NAME}" \
-                --type='json' \
-                -p="[{"op": "add", "path": "/spec/template/spec/containers/${i}/ports/-", "value": { "containerPort": 5005, "protocol": "TCP" }}]"
+            --type='json' \
+            -p='[{"op": "add", "path": "/spec/template/spec/containers/'"${i}"'/ports/-", "value": {"containerPort": 5005, "protocol": "TCP" }}]'
         fi
     fi
 done
 
 
-# kubectl get deployment java-demo-app \
-#     -o jsonpath="{.spec.template.spec.containers[?(@.name=="java-demo")].ports[?(@.containerPort==5005)].containerPort}"
+JAVA_DEBUG_AGENT='-Xdebug -agentlib:jdwp=transport=dt_socket,address=0.0.0.0:5005,server=y,suspend=n'
+kubectl patch deployment "${DEPLOYMENT_NAME}" \
+     -p '{"spec":{"template":{"spec":{"containers":[{"name": "'"${CONTAINER_NAME}"'","env": [{"name":"JAVA_TOOL_OPTIONS","value": "'"${JAVA_DEBUG_AGENT}"'"}]}]}}}}'
+
+
+# add custom label
+kubectl patch deploy "${DEPLOYMENT_NAME}"  \
+    -p '{"spec":{"template":{"metadata":{"labels":{"debug": "agentlib"}}}}}'
+
 
 
 cat <<EOF | kubectl apply -f -
@@ -39,7 +53,7 @@ metadata:
   namespace: ${NAMESPACE}
 spec:
   selector:
-    name: ${K8S_SELECTOR}
+    debug: agentlib
   type: NodePort
   ports:
   - port: 5005

@@ -19,7 +19,7 @@ spec:
           ports:
             - containerPort: 80
         - name: java-demo
-          image: kubernetes.docker.internal/java-demo-app:1.2.8
+          image: kubernetes.docker.internal/java-demo-app:1.2.9
           imagePullPolicy: Always
           ports:
             - name: http

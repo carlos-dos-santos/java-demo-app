@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+#kubectl patch deployment java-demo \
+#-p '{"spec":{"template":{"spec":{"containers":[{"env":[{"name":"AWS_CLUSTER_NAME","value":"test-cluster"}],"name":"velero"}]}}}}'
+
+# kubectl patch deployment java-demo-app \
+#     -p '{"spec":{"template":{"spec":{"containers":[{"name":"java-demo","env":[{"name":"abc","value":"my-value"}]}]}}}}'
+
+ export NEW_VAL="-abc"
+# kubectl patch deployment java-demo-app \
+#     -p '{"spec":{"template":{"spec":{"containers":[{"name":"java-demo","env":[{"name":"DEBUG","value":"'${NEW_VAL}'"}]}]}}}}'
+
+
+
+DEPLOYMENT_NAME=java-demo-app
+CONTAINER_NAME=java-demo
+JAVA_DEBUG_AGENT='-Xdebug -agentlib:jdwp=transport=dt_socket,address=0.0.0.0:5005,server=y,suspend=n'
+
+
+kubectl patch deployment "${DEPLOYMENT_NAME}" \
+     -p '{"spec":{"template":{"spec":{"containers":[{"name": "'"${CONTAINER_NAME}"'","env": [{"name":"JAVA_TOOL_OPTIONS","value": "'"${JAVA_DEBUG_AGENT}"'"}]}]}}}}'
+
+
+# echo kubectl patch deployment "${DEPLOYMENT_NAME}" \
+#     --type='json' \
+#     -p='[{"op": "add", "path": "/spec/template/spec/containers/'"${POSITION}"'/ports/-", "value": { "containerPort": 5005, "protocol": "TCP" }}]'
+
+
+CONTAINER_POS=1
+echo kubectl patch deployment "${DEPLOYMENT_NAME}" \
+    --type='json' \
+    -p='[{"op": "add", "path": "/spec/template/spec/containers/'"${CONTAINER_POS}"'/ports/-", "value": { "containerPort": 5005, "protocol": "TCP" }}]'
