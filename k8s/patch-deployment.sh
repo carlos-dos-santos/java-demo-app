@@ -55,7 +55,7 @@ function patch() {
     NAMESPACE="${3}"
     JVM_DEBUG_PORT="${4}"
 
-    CONTAINER_PORT=5005
+    local CONTAINER_PORT=5005
 
 
     CONTAINERS=($(kubectl get deployment "${DEPLOYMENT_NAME}" -o jsonpath='{.spec.template.spec.containers[*].name }'))
@@ -89,7 +89,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
 metadata:
-  name: debug-${DEPLOYMENT_NAME}
+  name: ${DEPLOYMENT_NAME}-svc-debug
   namespace: ${NAMESPACE}
 spec:
   selector:
