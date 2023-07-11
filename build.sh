@@ -9,11 +9,10 @@ eval $(printf 'VERSION=${project.version}\n' | mvn  help:evaluate 2>/dev/null | 
 
 echo $VERSION
 #docker build --build-arg VERSION=${VERSION} -t test/java-demo-app:${VERSION} --no-cache --target debug -f Dockerfile.stage .
-echo docker build --build-arg VERSION=${VERSION} -t kubernetes.docker.internal/java-demo-app:${VERSION} ${TARGET_LAYER} -f Dockerfile.stage .
+echo docker build --build-arg VERSION=${VERSION} -t kubernetes.docker.internal/java-demo-app:${VERSION} -f Dockerfile .
 
 docker build --build-arg VERSION=${VERSION} \
     -t kubernetes.docker.internal/java-demo-app:${VERSION} \
     --progress plain \
-    --target ${TARGET_LAYER} \
-    --file Dockerfile.stage .
+    --file Dockerfile .
 #docker push machamba/java-demo-app:${VERSION} 
