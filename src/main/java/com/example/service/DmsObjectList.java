@@ -1,13 +1,21 @@
 package com.example.service;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,13 +27,19 @@ import com.os.services.core.api.models.dms.objects.transfer.ResultContainerDmsOb
 
 
 public class DmsObjectList {
-    private RestTemplate restTemplate;
+    //@Autowired
+    private RestTemplate restTemplate = new RestTemplate();
 
-    public DmsObjectList(final RestTemplate restTemplate) {
-            this.restTemplate = restTemplate;
+    private List<Map<String, Object>> metadata;
+
+
+    //public DmsObjectList(final RestTemplate restTemplate, final List<Map<String, Object>> metadata) {
+    public DmsObjectList(final List<Map<String, Object>> metadata) {
+        //this.restTemplate = restTemplate;
+        this.metadata = metadata;
     }
 
-    public static <T> ResultContainerDmsObject createDmsObjectsForId(List<Map<String, Object>> metadata) {
+    public static ResultContainerDmsObject requestBody(List<Map<String, Object>> metadata) {
         final ResultContainerDmsObject dmsObjectList = new ResultContainerDmsObject();
 
         metadata.forEach(item -> {
@@ -43,6 +57,24 @@ public class DmsObjectList {
     }
 
 
+    // public static List<Map<String, Object>> toMetadata(final List<String> objectIds) {
+    //     List<Map<String, Object>> metadata = new ArrayList<Map<String, Object>>();
+    //     objectIds.forEach(id -> { 
+    //         metadata.add(Map.of("system:objectId", id)); 
+    //     });
+    //     return metadata;
+    // }
+    //
+
+    private static List<Map<String, Object>> toMetadata(final List<String> objectIds) {
+        List<Map<String, Object>> metadata = new ArrayList<Map<String, Object>>();
+        objectIds.forEach(objectId -> {
+            metadata.add(Map.of("system:objectId", objectId));
+        });
+        return metadata;
+    }
+
+
     public static <T> String toJson(final T data) throws JsonProcessingException {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
@@ -50,33 +82,75 @@ public class DmsObjectList {
     }
 
 
-    public ResponseEntity<ResultContainerDmsObject> post(final String url, final String authorization, ResultContainerDmsObject body) {
+    public ResponseEntity<ResultContainerDmsObject> post(String url, String authorization) {
         final String URI = url;
 
-        HttpHeaders headers = new HttpHeaders() {{
-            add("Authorization", authorization);
-        }};
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", authorization);
 
-        HttpEntity<ResultContainerDmsObject> request = new HttpEntity<>(body, headers);
-        return null;
-        //return restTemplate.exchange(URI, HttpMethod.POST, request, ResultContainerDmsObject.class);
+        return restTemplate.exchange(URI, HttpMethod.POST,
+            new HttpEntity<>(requestBody(metadata), headers), ResultContainerDmsObject.class);
     }
 
 
-    public static void main(String... args) throws JsonProcessingException {
-        List<Map<String, Object>> metadata = List.of(
-            Map.of("system:objectId","cdc7095f-a5ce-486d-92a7-6d0955d969ee"),
-            Map.of("system:objectId","98eeed73-5d93-4881-af9a-444e3f0a290d"));
+    public ResponseEntity<Map> postParams(String url, String authorization, Boolean greedy) {
+        final String URI = url;
 
-        var dms = createDmsObjectsForId(metadata);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", authorization);
 
-        final String authorization = "";
-        HttpHeaders headers = new HttpHeaders() {{
-            add("Authorization", authorization);
+        final Map<String, ?> uriVariables = new HashMap<>() {{
+            put("greedy", greedy);
         }};
 
-        HttpEntity<ResultContainerDmsObject> request = new HttpEntity<>(dms, headers);
+        final String message = "abc";
+        final String body = "{\"message\":\"" + message + "\"}";
 
-       System.out.println(toJson(request));
+        final MultiValueMap<String, String> param = new LinkedMultiValueMap<String, String>() {{
+            this.put("greedy", List.of("true"));
+        }};
+
+        // final URI uri = UriComponentsBuilder.fromHttpUrl(url)
+        //     .queryParams(param)
+        //     .build();
+
+
+
+        final UriComponents uriBuilder = UriComponentsBuilder.fromHttpUrl(URI)
+            .queryParam("greedy", greedy)
+            .build();
+
+        return restTemplate.exchange(uriBuilder.toUriString(), HttpMethod.POST, new HttpEntity<>(body, headers), Map.class);
+    }
+
+
+
+    public static void main(String... args) throws JsonProcessingException {
+
+/*
+        List<String> objectIds = List.of(
+            "cdc7095f-a5ce-486d-92a7-6d0955d969ee", 
+            "98eeed73-5d93-4881-af9a-444e3f0a290d");
+
+        final RestTemplate restTemplate = new RestTemplate();
+        DmsObjectList dmsList = new DmsObjectList(restTemplate, toMetadata(objectIds));
+
+        final String url = "http://localhost:9191/api/meta";
+        final String authorization = "XXXX";
+
+        dmsList.post(url, authorization);
+ */
+
+        List<String> objectIds = List.of(
+            "cdc7095f-a5ce-486d-92a7-6d0955d969ee", 
+            "98eeed73-5d93-4881-af9a-444e3f0a290d");
+
+        //final RestTemplate restTemplate = new RestTemplate();
+        final DmsObjectList dmsList = new DmsObjectList(toMetadata(objectIds));
+
+        final String url = "http://localhost:9191/api/params";
+        final String authorization = "XXXX";
+
+        dmsList.postParams(url, authorization, false);
     }
 }
