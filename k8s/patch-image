@@ -6,5 +6,4 @@ container_name=api-web
 
 image="kubernetes.docker.internal/${docker_image_name}"
 kubectl set image deployment/${deployment_name} ${container_name}=${image}
-
 kubectl rollout restart deployment/${deployment_name}

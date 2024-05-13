@@ -2,17 +2,17 @@
 #
 TARGET_LAYER=${1:-""}
 
-mvn package 
-#VERSION=$(mvn help:evaluate  -Dexpression=${project.version} -q  -DforceStdout 2>/dev/null)
+#mvn package 
+VERSION=$(mvn help:evaluate  -Dexpression=project.version -q  -DforceStdout 2>/dev/null)
 #VERSION=$(grep -oPm1 "(?<=<version>)[^<]+" "pom.xml")
-eval $(printf 'VERSION=${project.version}\n' | mvn  help:evaluate 2>/dev/null | grep 'VERSION')
+#eval $(printf 'VERSION=project.version\n' | mvn  help:evaluate 2>/dev/null | grep 'VERSION')
 
 echo $VERSION
 #docker build --build-arg VERSION=${VERSION} -t test/java-demo-app:${VERSION} --no-cache --target debug -f Dockerfile.stage .
-echo docker build --build-arg VERSION=${VERSION} -t kubernetes.docker.internal/java-demo-app:${VERSION} -f Dockerfile .
-
+# echo docker build --build-arg VERSION=${VERSION} -t kubernetes.docker.internal/java-demo-app:${VERSION} -f Dockerfile .
+#
 docker build --build-arg VERSION=${VERSION} \
     -t kubernetes.docker.internal/java-demo-app:${VERSION} \
     --progress plain \
     --file Dockerfile .
-#docker push machamba/java-demo-app:${VERSION} 
+docker push machamba/java-demo-app:${VERSION} 
