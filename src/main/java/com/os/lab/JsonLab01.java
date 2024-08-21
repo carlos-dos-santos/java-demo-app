@@ -25,9 +25,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 //
 public class JsonLab01 {
     public static void main(String args[]) throws Exception {
-        //objectNode();
-        //objectArrayNode();
         // body("903f2ae8-2cfc-476c-8386-55c6811e41da");
+    // new line added
         testNested();
     }
 

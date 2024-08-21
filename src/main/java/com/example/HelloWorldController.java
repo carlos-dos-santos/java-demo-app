@@ -45,6 +45,7 @@ public class HelloWorldController {
     @RequestMapping("/hello")
     public String index() {
         System.out.println("0 bla bla");
+        logger.info(">>>>> bla bla bla");
         return "Hello, World!";
     }
 
